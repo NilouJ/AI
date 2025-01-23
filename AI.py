@@ -63,7 +63,8 @@ if __name__ == '__main__':
         path="/Users/ninoufjj/Library/CloudStorage/OneDrive-MacquarieUniversity"
              "/Nilou/AI/ST000450.csv",
         transform=True,
-        label_column='Disease'
+        label_column='Disease',
+        categorical_columns=['Gender']
     )
 
     # # Fetch a sample
