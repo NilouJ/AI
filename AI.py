@@ -67,12 +67,6 @@ if __name__ == '__main__':
         categorical_columns=['Gender']
     )
 
-    # # Fetch a sample
-    # features, label = dataset[67]
-    # print("Features:", features)
-    # print("Label:", label)
-
-    # Using dataloader
     # Create DataLoader
     dataloader = DataLoader(
         dataset,
