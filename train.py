@@ -74,6 +74,7 @@ writer.flush()
 writer.add_graph(model, metabolic_profiles)
 writer.flush()
 
+
 #
 # # 8: Adding projector to view high dimensional data in lower dimension
 # def select_n_random_samples(metabolic_profiles, labels, n):
@@ -145,11 +146,11 @@ for epoch_index in range(EPOCHS):
             toutput = model(tprofiles)
             tloss = criterion(toutput, tlabels)
             running_tloss += tloss.item()
-        avg_test_loss = running_tloss / (tbatch_idx+1)
+        avg_test_loss = running_tloss / (tbatch_idx + 1)
         print('Train LOSS: {}  Test LOSS: {}'.format(avg_train_loss, avg_test_loss))
         writer.add_scalar('Train vs Test Loss',
                           {'Training': avg_train_loss, 'Test Loss': avg_test_loss},
-                          epoch_index+1)
+                          epoch_index + 1)
         writer.flush()
 
         #Track the best performance, and save model's state
@@ -158,8 +159,3 @@ for epoch_index in range(EPOCHS):
             best_model_path = 'model_{}_{}'.format(timestamp, epoch_index)
             torch.save(model.state_dict(), best_model_path)
 writer.close()
-
-
-
-
-
