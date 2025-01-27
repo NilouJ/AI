@@ -24,7 +24,9 @@ train_size = total_samples - test_size
 train_loader = DataLoader(dataset=train_dataset, batch_size=4, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=4, shuffle=True)
 # 3: setting up tensorboard
-writer = SummaryWriter('runs/metabolomics1')
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+run_name = f"metabolomics_CNN1D_{timestamp}"
+writer = SummaryWriter(f"runs/{run_name}")
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # 4: instantiate and initialize model
