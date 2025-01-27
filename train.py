@@ -127,9 +127,7 @@ def train_one_epoch(epoch_index, tb_writer, model, train_loader, optimizer, crit
         optimizer.step()
         running_loss += loss.item()
     avg_epoch_loss = running_loss / len(train_loader)
-    tb_writer.add_scalar('Avg Epoch Loss: ', avg_epoch_loss, epoch_index)
-
-    # running_loss = 0
+    tb_writer.add_scalar('Avg Epoch Loss', avg_epoch_loss, epoch_index)
 
     return avg_epoch_loss
 
