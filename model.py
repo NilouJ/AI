@@ -25,7 +25,7 @@ class CNN1DModel(nn.Module):
         self.fc1 = nn.Linear(filters[1] * self.conv_output_length, fc_hidden_units[0])
         self.fc2 = nn.Linear(fc_hidden_units[0], num_classes)
 
-        # Dropout for regularization
+        # Dropout for regularization FOR HIDDEN LAYER between fc1 and fc2
         self.dropout = nn.Dropout(dropout_rate)
 
     def compute_conv_output(self, input_length, kernel_sizes, strides):
