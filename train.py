@@ -13,7 +13,6 @@ from sklearn.preprocessing import StandardScaler
 # 1. Load datasets and split test train
 dataset_path = "ST000450.csv"
 dataset = MetabolomicsDataset(dataset_path)
-dataset.data = StandardScaler().fit_transform(dataset.data)
 total_samples = len(dataset)
 test_size = int(0.2 * total_samples)
 train_size = total_samples - test_size
@@ -36,29 +35,36 @@ model = CNN1DModel().to(device)
 # 5: define loss and set optimizer
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+
+
 # optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
 # 6: Log heatmap of metabolic profiles on tensorboard
-dataiter = iter(train_loader)
-metabolic_profiles, labels = next(dataiter)
+def log_tb_heatmap(writer, train_loader):
+    dataiter = iter(train_loader)
+    metabolic_profiles, labels = next(dataiter)
 
-plt.figure(figsize=(12, 8))
-profiles_array = np.array([profile.numpy() for profile in metabolic_profiles])
-labels_list = [f"Label {label.item()}" for label in labels]
-sns.heatmap(
-    profiles_array,
-    cmap="viridis",
-    annot=False,
-    # xticklabels=[f"Feature {i}" for i in range(profiles_array.shape[1])],
-    yticklabels=labels_list
-)
-# Add labels and title
-plt.title("Heatmap of Metabolic Profiles")
-plt.xlabel("Features")
-plt.ylabel("Samples (Labels)")
+    plt.figure(figsize=(12, 8))
+    profiles_array = np.array([profile.numpy() for profile in metabolic_profiles])
+    labels_list = [f"Label {label.item()}" for label in labels]
+    sns.heatmap(
+        profiles_array,
+        cmap="viridis",
+        annot=False,
+        # xticklabels=[f"Feature {i}" for i in range(profiles_array.shape[1])],
+        yticklabels=labels_list
+    )
+    # Add labels and title
+    plt.title("Heatmap of Metabolic Profiles")
+    plt.xlabel("Features")
+    plt.ylabel("Samples (Labels)")
 
-writer.add_figure("Heatmap of Sample Data", plt.gcf())
-writer.flush()
+    writer.add_figure("Heatmap of Sample Data", plt.gcf())
+    writer.flush()
+
+
+log_tb_heatmap(writer, train_loader)
+
 
 # data_sample = pd.DataFrame({
 #     "Label": labels.numpy(),
@@ -71,8 +77,14 @@ writer.flush()
 
 
 # 7: add model graph to tensorboard
-writer.add_graph(model, metabolic_profiles)
-writer.flush()
+def log_tb_computation_graph(writer, train_loader):
+    dataiter = iter(train_loader)
+    metabolic_profiles, labels = next(dataiter)
+    writer.add_graph(model, metabolic_profiles)
+    writer.flush()
+
+
+log_tb_computation_graph(writer, train_loader)
 
 
 #
@@ -107,7 +119,6 @@ def profiles_to_probe(model, metabolic_profiles, labels):
 def train_one_epoch(epoch_index, tb_writer, model, train_loader, optimizer, criterion):
     # model.train()
     running_loss = 0
-    batch_loss = 0
     for batch_idx, (profiles, labels) in enumerate(train_loader):
         optimizer.zero_grad()
         output = model(profiles)
@@ -115,14 +126,12 @@ def train_one_epoch(epoch_index, tb_writer, model, train_loader, optimizer, crit
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
-        if batch_idx % 5 == 0:
-            batch_loss = running_loss / 5
-            print('  batch {} loss: {}'.format(batch_idx + 1, batch_loss))
-            tb_x = epoch_index * len(train_loader) + batch_idx
-            tb_writer.add_scalar('Loss/train', batch_loss, tb_x)
-            running_loss = 0
+    avg_epoch_loss = running_loss / len(train_loader)
+    tb_writer.add_scalar('Avg Epoch Loss: ', avg_epoch_loss, epoch_index)
 
-    return batch_loss
+    # running_loss = 0
+
+    return avg_epoch_loss
 
 
 ## Train loop + Eval/Inference loop (Intra epoch)
@@ -147,10 +156,10 @@ for epoch_index in range(EPOCHS):
             tloss = criterion(toutput, tlabels)
             running_tloss += tloss.item()
         avg_test_loss = running_tloss / (tbatch_idx + 1)
-        print('Train LOSS: {}  Test LOSS: {}'.format(avg_train_loss, avg_test_loss))
-        writer.add_scalar('Train vs Test Loss',
-                          {'Training': avg_train_loss, 'Test Loss': avg_test_loss},
-                          epoch_index + 1)
+        print(f"Test loss: {avg_test_loss: } , Test Accuracy: {(100 * avg_test_loss): }%")
+        #Log losses to tensorboard
+        writer.add_scalar('Loss/Train', avg_train_loss, epoch_index + 1)
+        writer.add_scalar('Loss/Test', avg_test_loss, epoch_index + 1)
         writer.flush()
 
         #Track the best performance, and save model's state
@@ -158,4 +167,7 @@ for epoch_index in range(EPOCHS):
             best_vloss = avg_test_loss
             best_model_path = 'model_{}_{}'.format(timestamp, epoch_index)
             torch.save(model.state_dict(), best_model_path)
+
+        # Flush after each epoch
+        writer.flush()
 writer.close()
