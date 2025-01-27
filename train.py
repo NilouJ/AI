@@ -23,6 +23,7 @@ train_size = total_samples - test_size
 # 2: Data loaders
 train_loader = DataLoader(dataset=train_dataset, batch_size=4, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=4, shuffle=True)
+
 # 3: setting up tensorboard
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 run_name = f"metabolomics_CNN1D_{timestamp}"
@@ -37,7 +38,7 @@ criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 # optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
-# 6: Write to tensorboard convert the tensors to list and numpy to add to tensorboard
+# 6: Log heatmap of metabolic profiles on tensorboard
 dataiter = iter(train_loader)
 metabolic_profiles, labels = next(dataiter)
 
@@ -55,7 +56,7 @@ sns.heatmap(
 plt.title("Heatmap of Metabolic Profiles")
 plt.xlabel("Features")
 plt.ylabel("Samples (Labels)")
-# Log the heatmap as an image to TensorBoard
+
 writer.add_figure("Heatmap of Sample Data", plt.gcf())
 writer.flush()
 
@@ -69,10 +70,9 @@ writer.flush()
 # writer.flush()
 
 
-# 7: using tensorboard to inspect the model
+# 7: add model graph to tensorboard
 writer.add_graph(model, metabolic_profiles)
-writer.close()
-
+writer.flush()
 
 #
 # # 8: Adding projector to view high dimensional data in lower dimension
@@ -124,9 +124,9 @@ def train_one_epoch(epoch_index, tb_writer, model, train_loader, optimizer, crit
     return batch_loss
 
 
-# Train loop + Eval/Inference loop (Intra epoch)
-timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-writer = SummaryWriter('runs/fashion_trainer_{}'.format(timestamp))
+## Train loop + Eval/Inference loop (Intra epoch)
+# timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+# writer = SummaryWriter('runs/fashion_trainer_{}'.format(timestamp))
 
 EPOCHS = 5
 best_vloss = 1_000_000
@@ -137,9 +137,9 @@ for epoch_index in range(EPOCHS):
     model.train(True)
     avg_train_loss = train_one_epoch(epoch_index, writer, model, train_loader, optimizer, criterion)
 
-    # Inference mode
-    running_tloss = 0
+    # Inference mode evaluate model
     model.eval()
+    running_tloss = 0
     with torch.no_grad():
         for tbatch_idx, (tprofiles, tlabels) in enumerate(test_loader):
             toutput = model(tprofiles)
@@ -157,7 +157,7 @@ for epoch_index in range(EPOCHS):
             best_vloss = avg_test_loss
             best_model_path = 'model_{}_{}'.format(timestamp, epoch_index)
             torch.save(model.state_dict(), best_model_path)
-
+writer.close()
 
 
 
