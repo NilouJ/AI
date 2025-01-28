@@ -207,7 +207,7 @@ torch.quantization.prepare(model, inplace=True)
 
 # Calibrate the model
 for profiles, labels in train_loader:
-    profiles = profiles.to(device)
+    profiles = profiles.to('cpu')
     model(profiles)
 
 # Convert to quantized version
