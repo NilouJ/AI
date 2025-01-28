@@ -41,7 +41,6 @@ for name, module in model.named_modules():
 # 5: define loss and set optimizer
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-scheduler = StepLR(optimizer, step_size=2, gamma=0.1)ß
 
 
 # optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
@@ -202,6 +201,7 @@ for name, module in model.named_modules():
 
 # Quantize the model
 model.eval()  # Ensure evaluation mode
+model.cpu()
 model.qconfig = torch.quantization.get_default_qconfig('fbgemm')
 torch.quantization.prepare(model, inplace=True)
 
