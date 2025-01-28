@@ -17,6 +17,7 @@ total_samples = len(dataset)
 test_size = int(0.2 * total_samples)
 train_size = total_samples - test_size
 [test_dataset, train_dataset] = torch.utils.data.random_split(dataset, [test_size, train_size])
+device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
 # test_labels = [label for _, label in test_dataset]
 
 # 2: Data loaders

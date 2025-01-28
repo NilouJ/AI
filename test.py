@@ -77,34 +77,34 @@ import seaborn as sns
 from datetime import datetime
 from sklearn.preprocessing import StandardScaler
 
-# 1. Load datasets and split test train
-dataset_path = "ST000450.csv"
-dataset = MetabolomicsDataset(dataset_path)
-total_samples = len(dataset)
-test_size = int(0.2 * total_samples)
-train_size = total_samples - test_size
-[test_dataset, train_dataset] = torch.utils.data.random_split(dataset, [test_size, train_size])
-# test_labels = [label for _, label in test_dataset]
-
-# 2: Data loaders
-train_loader = DataLoader(dataset=train_dataset, batch_size=10, shuffle=True)
-test_loader = DataLoader(dataset=test_dataset, batch_size=10, shuffle=True)
-
-
-def train_one_epoch(epoch_index, training_loader):
-    running_loss = 0.
-
-    for i, data in enumerate(training_loader):
-        inputs, labels = data
-        loss = i
-        # Gather data and report
-        running_loss += loss
-
-    avg_epoch_loss = running_loss / len(training_loader)
-    print(f'running loss: {avg_epoch_loss}, i: {i}')
-
-    return running_loss / len(training_loader)
-
-
-for epoch_index in range(0, 3):
-    train_one_epoch(epoch_index, training_loader=train_loader)
+# # 1. Load datasets and split test train
+# dataset_path = "ST000450.csv"
+# dataset = MetabolomicsDataset(dataset_path)
+# total_samples = len(dataset)
+# test_size = int(0.2 * total_samples)
+# train_size = total_samples - test_size
+# [test_dataset, train_dataset] = torch.utils.data.random_split(dataset, [test_size, train_size])
+# # test_labels = [label for _, label in test_dataset]
+#
+# # 2: Data loaders
+# train_loader = DataLoader(dataset=train_dataset, batch_size=10, shuffle=True)
+# test_loader = DataLoader(dataset=test_dataset, batch_size=10, shuffle=True)
+#
+#
+# def train_one_epoch(epoch_index, training_loader):
+#     running_loss = 0.
+#
+#     for i, data in enumerate(training_loader):
+#         inputs, labels = data
+#         loss = i
+#         # Gather data and report
+#         running_loss += loss
+#
+#     avg_epoch_loss = running_loss / len(training_loader)
+#     print(f'running loss: {avg_epoch_loss}, i: {i}')
+#
+#     return running_loss / len(training_loader)
+#
+#
+# for epoch_index in range(0, 3):
+#     train_one_epoch(epoch_index, training_loader=train_loader)
