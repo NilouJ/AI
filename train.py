@@ -31,7 +31,6 @@ test_loader = DataLoader(dataset=test_dataset, batch_size=4, shuffle=True)
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 run_name = f"metabolomics_CNN1D_{timestamp}"
 writer = SummaryWriter(f"runs/{run_name}")
-device = torch.device('mps' if torch.cuda.is_available() else 'cpu')
 
 # 4: instantiate and initialize model
 model = CNN1DModel().to(device)
