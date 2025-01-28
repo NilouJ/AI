@@ -199,20 +199,28 @@ for name, module in model.named_modules():
     if isinstance(module, (torch.nn.Linear, torch.nn.Conv1d)):
         prune.remove(module, 'weight')
 
-# Quantize the model
-model.eval()  # Ensure evaluation mode
-model.cpu()
-model.qconfig = torch.quantization.get_default_qconfig('fbgemm')
-torch.quantization.prepare(model, inplace=True)
 
-# Calibrate the model
-for profiles, labels in train_loader:
-    profiles = profiles.to('cpu')
-    model(profiles)
 
-# Convert to quantized version
-torch.quantization.convert(model, inplace=True)
-print("Quantization complete!")
 
-# Save the quantized model
-torch.save(model.state_dict(), f'model_quantized_{timestamp}.pth')
+# # Quantize the model
+# model.eval()  # Ensure evaluation mode
+# model.cpu()
+# model.qconfig = torch.quantization.get_default_qconfig('fbgemm')
+# torch.quantization.prepare(model, inplace=True)
+#
+# # Calibrate the model
+# for profiles, labels in train_loader:
+#     profiles = profiles.to('cpu')
+#     model(profiles)
+#
+# # Convert to quantized version
+# torch.quantization.convert(model, inplace=True)
+# print("Quantization complete!")
+#
+# # Save the quantized model
+# torch.save(model.state_dict(), f'model_quantized_{timestamp}.pth')
+
+
+# Save the trained model
+torch.save(model.state_dict(), f'model_{timestamp}.pth')
+print(f"Model saved as 'model_{timestamp}.pth'")
