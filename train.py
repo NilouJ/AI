@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from datetime import datetime
+from torch.cuda.amp import GradScaler, autocast
 from sklearn.preprocessing import StandardScaler
 
 # 1. Load datasets and split test train
@@ -32,6 +33,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # 4: instantiate and initialize model
 model = CNN1DModel().to(device)
+scaler = GradScaler()
 
 # 5: define loss and set optimizer
 criterion = torch.nn.CrossEntropyLoss()
@@ -121,11 +123,17 @@ def train_one_epoch(epoch_index, tb_writer, model, train_loader, optimizer, crit
     # model.train()
     running_loss = 0
     for batch_idx, (profiles, labels) in enumerate(train_loader):
+        profiles = profiles.to(device)
+        labels = labels.to(device)
         optimizer.zero_grad()
-        output = model(profiles)
-        loss = criterion(output, labels)
-        loss.backward()
-        optimizer.step()
+
+        with autocast(device_type='msp'):
+            output = model(profiles)
+            loss = criterion(output, labels)
+
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
         running_loss += loss.item()
     avg_epoch_loss = running_loss / len(train_loader)
     tb_writer.add_scalar('Avg Epoch Loss', avg_epoch_loss, epoch_index)
@@ -151,6 +159,7 @@ for epoch_index in range(EPOCHS):
     running_tloss = 0
     with torch.no_grad():
         for tbatch_idx, (tprofiles, tlabels) in enumerate(test_loader):
+            tprofiles, tlabels = tprofiles.to(device), tlabels.to(device)
             toutput = model(tprofiles)
             tloss = criterion(toutput, tlabels)
             running_tloss += tloss.item()
