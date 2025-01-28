@@ -132,14 +132,10 @@ def train_one_epoch(epoch_index, tb_writer, model, train_loader, optimizer, crit
         profiles = profiles.to(device)
         labels = labels.to(device)
         optimizer.zero_grad()
-
-        with autocast(device_type='msp'):
-            output = model(profiles)
-            loss = criterion(output, labels)
-
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
+        output = model(profiles)
+        loss = criterion(output, labels)
+        loss.backward()
+        optimizer.step()
         running_loss += loss.item()
     avg_epoch_loss = running_loss / len(train_loader)
     tb_writer.add_scalar('Avg Epoch Loss', avg_epoch_loss, epoch_index)
