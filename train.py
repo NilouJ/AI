@@ -9,6 +9,8 @@ import pandas as pd
 import seaborn as sns
 from datetime import datetime
 from torch.cuda.amp import GradScaler, autocast
+import torch.nn.utils.prune as prune
+from torch.optim.lr_scheduler import StepLR
 from sklearn.preprocessing import StandardScaler
 
 # 1. Load datasets and split test train
@@ -33,11 +35,15 @@ device = torch.device('mps' if torch.cuda.is_available() else 'cpu')
 
 # 4: instantiate and initialize model
 model = CNN1DModel().to(device)
-scaler = GradScaler()
+for name, module in model.named_modules():
+    if isinstance(module, (torch.nn.Linear, torch.nn.Conv1d)):
+        prune.l1_unstructured(module, name='weight', amount=0.3)
 
 # 5: define loss and set optimizer
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+scheduler = StepLR(optimizer, step_size=2, gamma=0.1)
+scaler = GradScaler()
 
 
 # optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
@@ -140,13 +146,28 @@ def train_one_epoch(epoch_index, tb_writer, model, train_loader, optimizer, crit
 
     return avg_epoch_loss
 
+# Importance analysis feature importance: Gradient calculation
+def compute_gradients(model, input_data, target_label):
+    model.eval()
+    input_data = input_data.to(device).requires_grad_()  # Enable gradients for inputs
+
+    # Forward pass
+    output = model(input_data)
+    loss = output[0, target_label]  # Select the loss for the target class
+
+    # Backward pass to compute gradients for the selected loss
+    loss.backward()
+
+    # Extract gradients
+    gradients = input_data.grad.detach().cpu().numpy()  # Shape: [batch_size, input_features]
+    return gradients
 
 ## Train loop + Eval/Inference loop (Intra epoch)
 # timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 # writer = SummaryWriter('runs/fashion_trainer_{}'.format(timestamp))
 
 EPOCHS = 5
-best_vloss = 1_000_000
+best_vloss = float('inf')
 for epoch_index in range(EPOCHS):
     print('Epoch {}: '.format(epoch_index + 1))
 
@@ -179,3 +200,25 @@ for epoch_index in range(EPOCHS):
         # Flush after each epoch
         writer.flush()
 writer.close()
+
+# Remove pruning masks after training (optional)
+for name, module in model.named_modules():
+    if isinstance(module, (torch.nn.Linear, torch.nn.Conv1d)):
+        prune.remove(module, 'weight')
+
+# Quantize the model
+model.eval()  # Ensure evaluation mode
+model.qconfig = torch.quantization.get_default_qconfig('fbgemm')
+torch.quantization.prepare(model, inplace=True)
+
+# Calibrate the model
+for profiles, labels in train_loader:
+    profiles = profiles.to(device)
+    model(profiles)
+
+# Convert to quantized version
+torch.quantization.convert(model, inplace=True)
+print("Quantization complete!")
+
+# Save the quantized model
+torch.save(model.state_dict(), f'model_quantized_{timestamp}.pth')
