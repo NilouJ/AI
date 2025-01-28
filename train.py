@@ -85,6 +85,7 @@ log_tb_heatmap(writer, train_loader)
 def log_tb_computation_graph(writer, train_loader):
     dataiter = iter(train_loader)
     metabolic_profiles, labels = next(dataiter)
+    metabolic_profiles = metabolic_profiles.to('mps')
     writer.add_graph(model, metabolic_profiles)
     writer.flush()
 
