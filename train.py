@@ -20,7 +20,6 @@ total_samples = len(dataset)
 test_size = int(0.2 * total_samples)
 train_size = total_samples - test_size
 [test_dataset, train_dataset] = torch.utils.data.random_split(dataset, [test_size, train_size])
-device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
 # test_labels = [label for _, label in test_dataset]
 
 # 2: Data loaders
@@ -33,7 +32,7 @@ run_name = f"metabolomics_CNN1D_{timestamp}"
 writer = SummaryWriter(f"runs/{run_name}")
 
 # 4: instantiate and initialize model
-model = CNN1DModel().to(device)
+model = CNN1DModel().to('mps')
 for name, module in model.named_modules():
     if isinstance(module, (torch.nn.Linear, torch.nn.Conv1d)):
         prune.l1_unstructured(module, name='weight', amount=0.3)
@@ -126,8 +125,8 @@ def train_one_epoch(epoch_index, tb_writer, model, train_loader, optimizer, crit
     # model.train()
     running_loss = 0
     for batch_idx, (profiles, labels) in enumerate(train_loader):
-        profiles = profiles.to(device)
-        labels = labels.to(device)
+        profiles = profiles.to('mps')
+        labels = labels.to('mps')
         optimizer.zero_grad()
         output = model(profiles)
         loss = criterion(output, labels)
@@ -142,7 +141,7 @@ def train_one_epoch(epoch_index, tb_writer, model, train_loader, optimizer, crit
 # Importance analysis feature importance: Gradient calculation
 def compute_gradients(model, input_data, target_label):
     model.eval()
-    input_data = input_data.to(device).requires_grad_()  # Enable gradients for inputs
+    input_data = input_data.to('mps').requires_grad_()  # Enable gradients for inputs
 
     # Forward pass
     output = model(input_data)
@@ -173,7 +172,7 @@ for epoch_index in range(EPOCHS):
     running_tloss = 0
     with torch.no_grad():
         for tbatch_idx, (tprofiles, tlabels) in enumerate(test_loader):
-            tprofiles, tlabels = tprofiles.to(device), tlabels.to(device)
+            tprofiles, tlabels = tprofiles.to('mps'), tlabels.to('mps')
             toutput = model(tprofiles)
             tloss = criterion(toutput, tlabels)
             running_tloss += tloss.item()
