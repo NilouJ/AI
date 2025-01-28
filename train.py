@@ -42,8 +42,7 @@ for name, module in model.named_modules():
 # 5: define loss and set optimizer
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-scheduler = StepLR(optimizer, step_size=2, gamma=0.1)
-scaler = torch.amp.GradScaler()
+scheduler = StepLR(optimizer, step_size=2, gamma=0.1)ß
 
 
 # optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
