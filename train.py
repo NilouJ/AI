@@ -43,7 +43,7 @@ for name, module in model.named_modules():
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 scheduler = StepLR(optimizer, step_size=2, gamma=0.1)
-scaler = GradScaler()
+scaler = torch.amp.GradScaler()
 
 
 # optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
