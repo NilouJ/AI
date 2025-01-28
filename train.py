@@ -50,7 +50,7 @@ def log_tb_heatmap(writer, train_loader):
     metabolic_profiles, labels = next(dataiter)
 
     plt.figure(figsize=(12, 8))
-    profiles_array = np.array([profile.numpy() for profile in metabolic_profiles])
+    profiles_array = np.array([profile.cpu().numpy() for profile in metabolic_profiles])
     labels_list = [f"Label {label.item()}" for label in labels]
     sns.heatmap(
         profiles_array,
