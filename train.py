@@ -23,8 +23,8 @@ train_size = total_samples - test_size
 # test_labels = [label for _, label in test_dataset]
 
 # 2: Data loaders
-train_loader = DataLoader(dataset=train_dataset, batch_size=4, shuffle=True)
-test_loader = DataLoader(dataset=test_dataset, batch_size=4, shuffle=True)
+train_loader = DataLoader(dataset=train_dataset, batch_size=6, shuffle=True)
+test_loader = DataLoader(dataset=test_dataset, batch_size=6, shuffle=True)
 
 # 3: setting up tensorboard
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -35,14 +35,12 @@ writer = SummaryWriter(f"runs/{run_name}")
 model = CNN1DModel().to('mps')
 for name, module in model.named_modules():
     if isinstance(module, (torch.nn.Linear, torch.nn.Conv1d)):
-        prune.l1_unstructured(module, name='weight', amount=0.3)
+        prune.l1_unstructured(module, name='weight', amount=0)
 
 # 5: define loss and set optimizer
 criterion = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-
-
-# optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+# optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.00075, momentum=0.9)
 
 # 6: Log heatmap of metabolic profiles on tensorboard
 def log_tb_heatmap(writer, train_loader):
@@ -159,7 +157,7 @@ def compute_gradients(model, input_data, target_label):
 # timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 # writer = SummaryWriter('runs/fashion_trainer_{}'.format(timestamp))
 
-EPOCHS = 5
+EPOCHS = 35
 best_vloss = float('inf')
 for epoch_index in range(EPOCHS):
     print('Epoch {}: '.format(epoch_index + 1))
@@ -180,8 +178,8 @@ for epoch_index in range(EPOCHS):
         avg_test_loss = running_tloss / (tbatch_idx + 1)
         print(f"Test loss: {avg_test_loss: } , Test Accuracy: {(100 * avg_test_loss): }%")
         #Log losses to tensorboard
-        writer.add_scalar('Loss/Train', avg_train_loss, epoch_index + 1)
-        writer.add_scalar('Loss/Test', avg_test_loss, epoch_index + 1)
+        writer.add_scalar('Train Loss', avg_train_loss, epoch_index + 1)
+        writer.add_scalar('Test Loss', avg_test_loss, epoch_index + 1)
         writer.flush()
 
         #Track the best performance, and save model's state

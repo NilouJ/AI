@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 class CNN1DModel(nn.Module):
     def __init__(self, input_length=226, num_classes=2, filters=[32, 64], kernel_sizes=[3, 3],
-                 strides=[1, 1], dropout_rate=0.2, fc_hidden_units=[128]):
+                 strides=[1, 1], dropout_rate=0, fc_hidden_units=[128]):
         super(CNN1DModel, self).__init__()
 
         # First Convolutional Layer
