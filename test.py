@@ -108,3 +108,73 @@ from sklearn.preprocessing import StandardScaler
 #
 # for epoch_index in range(0, 3):
 #     train_one_epoch(epoch_index, training_loader=train_loader)
+
+# import requests
+# from bs4 import BeautifulSoup
+# import pandas as pd
+#
+# url = ("https://docs.google.com/document/u/0/d/e/2PACX-1vRMx5YQlZNa3ra8dYYxmv-QIQ3YJe8tbI3kqcuC7lQiZm"
+#        "-CSEznKfN_HYNSpoXcZIV3Y_O3YoUB1ecq/pub?pli=1")
+# response = requests.get(url)
+# if response.status_code == 200:
+#     soup = BeautifulSoup(response.text, "html.parser")
+#     tables = soup.find_all("table")
+#     if tables:
+#         data_frames = []
+#         for index, table in enumerate(tables):
+#             rows = table.find_all("tr")
+#             table_data = []
+
+
+import requests
+from bs4 import BeautifulSoup
+
+
+def decode_secret_message(url):
+    # Fetch HTML content from the Google Docs URL
+    response = requests.get(url)
+    if response.status_code != 200:
+        print("Failed to retrieve document.")
+        return
+
+    # Parse the HTML content
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    # Find the table
+    table = soup.find("table")
+    if not table:
+        print("No table found in the document.")
+        return
+
+    # Extract rows from the table
+    rows = table.find_all("tr")
+    data = []
+
+    for row in rows[1:]:  # Skip the header row
+        cols = row.find_all("td")
+        if len(cols) == 3:
+            x = int(cols[0].text.strip())
+            char = cols[1].text.strip()
+            y = int(cols[2].text.strip())
+            data.append((x, y, char))
+
+    # Determine grid size
+    max_x = max(x for x, y, _ in data)
+    max_y = max(y for x, y, _ in data)
+
+    # Create empty grid filled with spaces
+    grid = [[" " for _ in range(max_x + 1)] for _ in range(max_y + 1)]
+
+    # Populate the grid with characters
+    for x, y, char in data:
+        grid[y][x] = char  # Assign character at the correct position
+
+    # Print the decoded message
+    for row in grid:
+        print("".join(row))
+
+
+# Example usage (Replace with actual URL)
+url = ("https://docs.google.com/document/u/0/d/e/2PACX-1vRMx5YQlZNa3ra8dYYxmv-QIQ3YJe8tbI3kqcuC7lQiZm"
+       "-CSEznKfN_HYNSpoXcZIV3Y_O3YoUB1ecq/pub?pli=1")
+decode_secret_message(url)
